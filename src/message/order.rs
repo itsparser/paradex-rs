@@ -200,6 +200,9 @@ mod tests {
             trigger_price: None,
             signature: None,
             id: None,
+            flags: None,
+            recv_window: None,
+            stp: None,
         };
 
         let chain_id = Felt::from_hex("0x1").unwrap();

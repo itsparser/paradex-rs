@@ -39,6 +39,7 @@ pub mod subkey;
 pub mod types;
 pub mod utils;
 
+pub use api::WebSocketChannel;
 pub use environment::Environment;
 pub use error::{ParadexError, Result};
 pub use subkey::{ParadexSubkey, SubkeyAccount};
@@ -190,20 +191,19 @@ impl Paradex {
     }
 
     /// Fetch and store system configuration
+    #[allow(clippy::await_holding_lock)]
     async fn fetch_and_store_config(&mut self) -> Result<SystemConfig> {
-        let config = self
-            .api_client
-            .lock()
-            .unwrap()
-            .fetch_system_config()
-            .await?;
+        let config = {
+            let api_client = self.api_client.lock().unwrap();
+            api_client.fetch_system_config().await?
+        };
         self.config = Some(config.clone());
         Ok(config)
     }
 
     /// Perform onboarding and authentication
     async fn authenticate(&self) -> Result<()> {
-        let account = self
+        let _account = self
             .account
             .as_ref()
             .ok_or_else(|| ParadexError::AuthError("No account initialized".to_string()))?;
@@ -218,6 +218,7 @@ impl Paradex {
     }
 
     /// Perform onboarding
+    #[allow(clippy::await_holding_lock)]
     async fn onboard(&self) -> Result<()> {
         let account = self
             .account
@@ -245,6 +246,7 @@ impl Paradex {
     }
 
     /// Authenticate to get JWT token
+    #[allow(clippy::await_holding_lock)]
     async fn auth(&self) -> Result<()> {
         let account = self
             .account

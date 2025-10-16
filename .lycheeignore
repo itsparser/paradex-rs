@@ -1,0 +1,11 @@
+# Ignore localhost URLs (used in tests/examples)
+http://localhost
+http://localhost/
+
+# Ignore API endpoints that require authentication
+https://api.prod.paradex.trade/*
+https://api.testnet.paradex.trade/*
+
+# Ignore WebSocket URLs
+wss://ws.api.prod.paradex.trade/*
+wss://ws.api.testnet.paradex.trade/*

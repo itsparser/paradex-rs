@@ -66,6 +66,7 @@ pub struct ParadexSubkey {
     api_client: Arc<Mutex<ApiClient>>,
     ws_client: Arc<Mutex<WebSocketClient>>,
     account: Arc<Mutex<SubkeyAccount>>,
+    #[allow(dead_code)]
     config: SystemConfig,
 }
 
@@ -93,6 +94,7 @@ impl ParadexSubkey {
     ///     Ok(())
     /// }
     /// ```
+    #[allow(clippy::await_holding_lock)]
     pub async fn new(
         env: Environment,
         l2_private_key: impl Into<String>,
@@ -102,7 +104,10 @@ impl ParadexSubkey {
         let ws_client = Arc::new(Mutex::new(WebSocketClient::new(env)));
 
         // Fetch system config
-        let config = api_client.lock().unwrap().fetch_system_config().await?;
+        let config = {
+            let client = api_client.lock().unwrap();
+            client.fetch_system_config().await?
+        };
 
         // Create subkey account
         let account = SubkeyAccount::new(&l2_private_key.into(), &l2_address.into())?;

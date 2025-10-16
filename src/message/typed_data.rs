@@ -34,13 +34,13 @@ impl TypedData {
     /// Compute the message hash for signing
     pub fn message_hash(&self) -> Result<Felt> {
         // Encode domain
-        let domain_hash = self.encode_type("StarkNetDomain")?;
+        let _domain_hash = self.encode_type("StarkNetDomain")?;
 
         // Encode message
         let message_hash = self.encode_message(&self.primary_type)?;
 
         // Compute final hash: hash("StarkNet Message", domain_hash, account_address, message_hash)
-        let prefix = starknet_keccak(b"StarkNet Message");
+        let _prefix = starknet_keccak(b"StarkNet Message");
 
         // For now, we'll return the message hash
         // Full implementation would combine with domain and account
@@ -106,8 +106,14 @@ impl TypedData {
                         Felt::from_hex(s)
                             .map_err(|e| ParadexError::SigningError(format!("Invalid felt: {}", e)))
                     } else {
-                        Felt::from_dec_str(s)
-                            .map_err(|e| ParadexError::SigningError(format!("Invalid felt: {}", e)))
+                        // Try to parse as decimal first
+                        let s_clean = s.trim_end_matches(".0").trim_end_matches('.');
+                        if let Ok(felt) = Felt::from_dec_str(s_clean) {
+                            Ok(felt)
+                        } else {
+                            // If it's not a number, encode as short string (ASCII to felt)
+                            Self::encode_short_string(s)
+                        }
                     }
                 } else {
                     Err(ParadexError::SigningError(
@@ -123,9 +129,13 @@ impl TypedData {
                             ParadexError::SigningError(format!("Invalid value: {}", e))
                         })
                     } else {
-                        Felt::from_dec_str(s).map_err(|e| {
-                            ParadexError::SigningError(format!("Invalid value: {}", e))
-                        })
+                        // Try decimal, fall back to short string
+                        let s_clean = s.trim_end_matches(".0").trim_end_matches('.');
+                        if let Ok(felt) = Felt::from_dec_str(s_clean) {
+                            Ok(felt)
+                        } else {
+                            Self::encode_short_string(s)
+                        }
                     }
                 } else {
                     Err(ParadexError::SigningError(
@@ -134,6 +144,23 @@ impl TypedData {
                 }
             }
         }
+    }
+
+    fn encode_short_string(s: &str) -> Result<Felt> {
+        // Encode ASCII string as Felt (Cairo short string)
+        // Max 31 characters
+        if s.len() > 31 {
+            return Err(ParadexError::SigningError(format!(
+                "String too long for short string encoding: {}",
+                s
+            )));
+        }
+
+        let mut bytes = [0u8; 32];
+        let s_bytes = s.as_bytes();
+        bytes[32 - s_bytes.len()..].copy_from_slice(s_bytes);
+
+        Ok(Felt::from_bytes_be(&bytes))
     }
 }
 

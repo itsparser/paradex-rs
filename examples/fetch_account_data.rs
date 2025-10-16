@@ -5,7 +5,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
 
     // Initialize Paradex (requires authentication for private endpoints)
-    let paradex = Paradex::new(Environment::Testnet)?;
+    let _paradex = Paradex::new(Environment::Testnet)?;
 
     // NOTE: All endpoints below require authentication
     // Initialize with credentials first:

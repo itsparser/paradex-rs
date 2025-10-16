@@ -2,6 +2,7 @@
 //!
 //! Handles L1/L2 key derivation, account address computation, and message signing.
 
+#[allow(clippy::module_inception)]
 mod account;
 mod block_trades_signing;
 mod key_derivation;

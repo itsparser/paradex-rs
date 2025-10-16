@@ -100,6 +100,7 @@ impl ParadexAccount {
     }
 
     /// Get L2 private key (for signing)
+    #[allow(dead_code)]
     pub(crate) fn l2_private_key(&self) -> Felt {
         self.l2_private_key
     }

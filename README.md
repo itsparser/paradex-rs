@@ -3,9 +3,9 @@
 **High-performance Rust implementation of the Paradex SDK for decentralized derivatives trading**
 
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](#-license)
 
-> Complete feature parity with the [Paradex Python SDK](../paradex-py), built with Rust's performance and type safety.
+> Complete Rust implementation of the Paradex SDK, built with Rust's performance and type safety.
 
 ---
 
@@ -449,7 +449,6 @@ cargo doc --open
 ## 🎓 Documentation
 
 - **[Migration Guide](MIGRATION_GUIDE.md)** - Python → Rust transition
-- **[API Documentation](https://docs.rs/paradex-rs)** - Full API docs
 - **[Examples](examples/)** - Working code samples
 - **[Paradex Docs](https://docs.paradex.trade)** - Official API docs
 
@@ -549,7 +548,7 @@ Contributions welcome! Areas for enhancement:
 
 ## 📝 License
 
-MIT License - see [LICENSE](LICENSE) for details
+MIT License
 
 ---
 
@@ -557,8 +556,7 @@ MIT License - see [LICENSE](LICENSE) for details
 
 - [Paradex Official Site](https://paradex.trade)
 - [Paradex Documentation](https://docs.paradex.trade)
-- [Python SDK](../paradex-py)
-- [API Reference](https://docs.rs/paradex-rs)
+- [GitHub Repository](https://github.com/itsparser/paradex-rs)
 
 ---
 

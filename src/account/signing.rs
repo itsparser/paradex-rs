@@ -132,10 +132,16 @@ mod tests {
             trigger_price: None,
             signature: None,
             id: None,
+            flags: None,
+            recv_window: None,
+            stp: None,
         };
 
         let result = account.sign_order(&mut order);
-        assert!(result.is_ok());
+        if let Err(e) = &result {
+            eprintln!("Signing error: {:?}", e);
+        }
+        assert!(result.is_ok(), "Failed to sign order: {:?}", result);
         assert!(order.signature.is_some());
         assert!(order.signature_timestamp.is_some());
     }

@@ -5,7 +5,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
 
     // Initialize Paradex with credentials
-    let paradex = Paradex::new(Environment::Testnet)?;
+    let _paradex = Paradex::new(Environment::Testnet)?;
 
     // NOTE: This example requires authentication
     // Initialize with your credentials first:

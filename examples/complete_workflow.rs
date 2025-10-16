@@ -8,10 +8,11 @@
 //! - WebSocket subscriptions for real-time data
 //! - Position and balance queries
 
-use paradex_rs::{
-    Environment, Order, OrderInstruction, OrderSide, OrderType, Paradex, WebSocketChannel,
-};
+use paradex_rs::{Environment, Paradex};
+// Note: WebSocketChannel import needed when uncommenting authenticated features
+// use paradex_rs::WebSocketChannel;
 
+#[allow(clippy::await_holding_lock)]
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize logging

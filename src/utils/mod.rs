@@ -6,7 +6,7 @@ use rust_decimal::Decimal;
 pub fn to_quantum(value: Decimal, decimals: u32) -> String {
     let multiplier = Decimal::from(10u64.pow(decimals));
     let quantum = value * multiplier;
-    quantum.to_string()
+    quantum.normalize().to_string()
 }
 
 /// Convert quantum to decimal

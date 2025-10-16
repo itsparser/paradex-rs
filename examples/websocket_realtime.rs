@@ -4,6 +4,7 @@
 
 use paradex_rs::{Environment, Paradex, WebSocketChannel};
 
+#[allow(clippy::await_holding_lock)]
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
