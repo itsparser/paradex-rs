@@ -13,7 +13,7 @@ pub async fn onboard(
     headers: Vec<(String, String)>,
     public_key: &str,
 ) -> Result<()> {
-    let url = format!("{}/onboarding", api_url);
+    let url = format!("{api_url}/onboarding");
     let payload = json!({
         "public_key": public_key
     });
@@ -56,7 +56,7 @@ pub async fn authenticate(
     headers: Vec<(String, String)>,
     public_key: &str,
 ) -> Result<String> {
-    let url = format!("{}/auth/{}", api_url, public_key);
+    let url = format!("{api_url}/auth/{public_key}");
 
     let mut request = client.post(&url);
 

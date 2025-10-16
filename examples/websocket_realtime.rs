@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Box::pin(async move {
                 if let Some(data) = message.get("data") {
                     if let (Some(bid), Some(ask)) = (data.get("bid"), data.get("ask")) {
-                        println!("[BBO] Bid: {} | Ask: {}", bid, ask);
+                        println!("[BBO] Bid: {bid} | Ask: {ask}");
                     }
                 }
             })
@@ -46,7 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .subscribe(WebSocketChannel::Trades, Some("BTC-USD-PERP"), |message| {
             Box::pin(async move {
                 if let Some(data) = message.get("data") {
-                    println!("[Trade] {:?}", data);
+                    println!("[Trade] {data:?}");
                 }
             })
         })
@@ -61,7 +61,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Box::pin(async move {
                 if let Some(data) = message.get("data") {
                     if let Some(symbol) = data.get("symbol") {
-                        println!("[Market Summary] {}: {:?}", symbol, data);
+                        println!("[Market Summary] {symbol}: {data:?}");
                     }
                 }
             })

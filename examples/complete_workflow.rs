@@ -59,10 +59,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("✓ Market Summary:");
         println!("  - Symbol: {}", btc_summary.symbol);
         if let Some(last_price) = &btc_summary.last_price {
-            println!("  - Last Price: {}", last_price);
+            println!("  - Last Price: {last_price}");
         }
         if let Some(volume) = &btc_summary.volume_24h {
-            println!("  - 24h Volume: {}", volume);
+            println!("  - 24h Volume: {volume}");
         }
     }
     println!();

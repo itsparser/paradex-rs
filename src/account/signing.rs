@@ -139,9 +139,9 @@ mod tests {
 
         let result = account.sign_order(&mut order);
         if let Err(e) = &result {
-            eprintln!("Signing error: {:?}", e);
+            eprintln!("Signing error: {e:?}");
         }
-        assert!(result.is_ok(), "Failed to sign order: {:?}", result);
+        assert!(result.is_ok(), "Failed to sign order: {result:?}");
         assert!(order.signature.is_some());
         assert!(order.signature_timestamp.is_some());
     }

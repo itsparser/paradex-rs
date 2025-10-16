@@ -24,7 +24,7 @@ impl SubkeyAccount {
     /// Create a new subkey account
     pub fn new(l2_private_key: &str, l2_address: &str) -> Result<Self> {
         let private_key = Felt::from_hex(l2_private_key).map_err(|e| {
-            crate::error::ParadexError::ConfigError(format!("Invalid L2 key: {}", e))
+            crate::error::ParadexError::ConfigError(format!("Invalid L2 key: {e}"))
         })?;
 
         let public_key = get_public_key(&private_key);
@@ -51,7 +51,7 @@ impl SubkeyAccount {
     pub fn sign_hash(&self, hash: Felt) -> Result<(Felt, Felt)> {
         let signature = starknet_crypto::sign(&self.l2_private_key, &hash, &self.l2_public_key)
             .map_err(|e| {
-                crate::error::ParadexError::SigningError(format!("Signing failed: {}", e))
+                crate::error::ParadexError::SigningError(format!("Signing failed: {e}"))
             })?;
 
         Ok((signature.r, signature.s))

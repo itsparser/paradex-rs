@@ -26,7 +26,7 @@ impl ParadexAccount {
         // 4. Preparing invoke transaction
         // 5. Signing and submitting
         log::warn!("transfer_on_l2: Not yet implemented");
-        log::info!("Would transfer {} to {}", amount_decimal, target_l2_address);
+        log::info!("Would transfer {amount_decimal} to {target_l2_address}");
         Err(crate::error::ParadexError::GenericError(
             "L2 transfer not yet implemented - requires full Starknet contract integration"
                 .to_string(),

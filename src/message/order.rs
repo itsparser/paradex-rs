@@ -80,7 +80,7 @@ pub fn build_order_message(chain_id: Felt, order: &Order) -> TypedData {
     TypedData {
         domain: Domain {
             name: "Paradex".to_string(),
-            chain_id: format!("{:#x}", chain_id),
+            chain_id: format!("{chain_id:#x}"),
             version: "1".to_string(),
         },
         primary_type: "Order".to_string(),
@@ -171,7 +171,7 @@ pub fn build_modify_order_message(chain_id: Felt, order: &Order) -> TypedData {
     TypedData {
         domain: Domain {
             name: "Paradex".to_string(),
-            chain_id: format!("{:#x}", chain_id),
+            chain_id: format!("{chain_id:#x}"),
             version: "1".to_string(),
         },
         primary_type: "ModifyOrder".to_string(),

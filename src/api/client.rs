@@ -71,7 +71,7 @@ impl ApiClient {
 
     /// Fetch orderbook for a specific market
     pub async fn fetch_orderbook(&self, market: &str, depth: Option<u32>) -> Result<OrderBook> {
-        let path = format!("orderbook/{}", market);
+        let path = format!("orderbook/{market}");
         match depth {
             Some(d) => {
                 let depth_str = d.to_string();
@@ -85,7 +85,7 @@ impl ApiClient {
 
     /// Fetch best bid/offer for a specific market
     pub async fn fetch_bbo(&self, market: &str) -> Result<BBO> {
-        let path = format!("bbo/{}", market);
+        let path = format!("bbo/{market}");
         self.http_client.get(&path).await
     }
 
@@ -170,13 +170,13 @@ impl ApiClient {
 
     /// Fetch specific order by ID
     pub async fn fetch_order(&self, order_id: &str) -> Result<OrderResponse> {
-        let path = format!("orders/{}", order_id);
+        let path = format!("orders/{order_id}");
         self.http_client.get(&path).await
     }
 
     /// Fetch order by client ID
     pub async fn fetch_order_by_client_id(&self, client_id: &str) -> Result<OrderResponse> {
-        let path = format!("orders/by_client_id/{}", client_id);
+        let path = format!("orders/by_client_id/{client_id}");
         self.http_client.get(&path).await
     }
 
@@ -192,19 +192,19 @@ impl ApiClient {
 
     /// Modify an existing order
     pub async fn modify_order(&self, order_id: &str, order: &Order) -> Result<OrderResponse> {
-        let path = format!("orders/{}", order_id);
+        let path = format!("orders/{order_id}");
         self.http_client.put(&path, order).await
     }
 
     /// Cancel an order
     pub async fn cancel_order(&self, order_id: &str) -> Result<serde_json::Value> {
-        let path = format!("orders/{}", order_id);
+        let path = format!("orders/{order_id}");
         self.http_client.delete(&path).await
     }
 
     /// Cancel order by client ID
     pub async fn cancel_order_by_client_id(&self, client_id: &str) -> Result<serde_json::Value> {
-        let path = format!("orders/by_client_id/{}", client_id);
+        let path = format!("orders/by_client_id/{client_id}");
         self.http_client.delete(&path).await
     }
 
@@ -287,7 +287,7 @@ impl ApiClient {
 
     /// Fetch points data
     pub async fn fetch_points_data(&self, market: &str, program: &str) -> Result<PointsData> {
-        let path = format!("points_data/{}/{}", market, program);
+        let path = format!("points_data/{market}/{program}");
         self.http_client.get(&path).await
     }
 

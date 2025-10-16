@@ -76,7 +76,7 @@ impl WebSocketClientImpl {
         let url = &self.ws_url;
         let (ws_stream, _) = connect_async(url)
             .await
-            .map_err(|e| ParadexError::WebSocketError(format!("Connection failed: {}", e)))?;
+            .map_err(|e| ParadexError::WebSocketError(format!("Connection failed: {e}")))?;
 
         *self.ws_stream.lock().await = Some(ws_stream);
         *self.is_connected.lock().await = true;
@@ -112,7 +112,7 @@ impl WebSocketClientImpl {
             });
         }
 
-        log::info!("WebSocket connected to {}", url);
+        log::info!("WebSocket connected to {url}");
         Ok(())
     }
 
@@ -156,7 +156,7 @@ impl WebSocketClientImpl {
             .await
             .insert(channel.to_string(), true);
 
-        log::info!("Subscribed to channel: {}", channel);
+        log::info!("Subscribed to channel: {channel}");
         Ok(())
     }
 
@@ -175,7 +175,7 @@ impl WebSocketClientImpl {
         self.subscribed_channels.write().await.remove(channel);
         self.callbacks.write().await.remove(channel);
 
-        log::info!("Unsubscribed from channel: {}", channel);
+        log::info!("Unsubscribed from channel: {channel}");
         Ok(())
     }
 
@@ -187,7 +187,7 @@ impl WebSocketClientImpl {
         if let Some(ws) = stream.as_mut() {
             ws.send(Message::Text(msg_str))
                 .await
-                .map_err(|e| ParadexError::WebSocketError(format!("Send failed: {}", e)))?;
+                .map_err(|e| ParadexError::WebSocketError(format!("Send failed: {e}")))?;
             Ok(())
         } else {
             Err(ParadexError::WebSocketError("Not connected".to_string()))
@@ -232,7 +232,7 @@ impl WebSocketClientImpl {
                         break;
                     }
                     Some(Err(e)) => {
-                        log::error!("WebSocket error: {}", e);
+                        log::error!("WebSocket error: {e}");
                         *is_connected.lock().await = false;
                         break;
                     }
@@ -291,7 +291,7 @@ impl WebSocketClientImpl {
         if let Some(ws) = stream.as_mut() {
             ws.close(None)
                 .await
-                .map_err(|e| ParadexError::WebSocketError(format!("Close failed: {}", e)))?;
+                .map_err(|e| ParadexError::WebSocketError(format!("Close failed: {e}")))?;
         }
         *self.is_connected.lock().await = false;
         Ok(())

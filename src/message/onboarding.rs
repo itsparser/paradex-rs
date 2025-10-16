@@ -33,7 +33,7 @@ pub fn build_onboarding_message(chain_id: Felt) -> TypedData {
     TypedData {
         domain: Domain {
             name: "Paradex".to_string(),
-            chain_id: format!("{:#x}", chain_id),
+            chain_id: format!("{chain_id:#x}"),
             version: "1".to_string(),
         },
         primary_type: "Onboarding".to_string(),

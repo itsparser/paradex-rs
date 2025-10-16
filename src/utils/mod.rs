@@ -12,7 +12,7 @@ pub fn to_quantum(value: Decimal, decimals: u32) -> String {
 /// Convert quantum to decimal
 pub fn from_quantum(quantum: &str, decimals: u32) -> Result<Decimal, String> {
     let quantum_value =
-        Decimal::from_str_exact(quantum).map_err(|e| format!("Invalid quantum value: {}", e))?;
+        Decimal::from_str_exact(quantum).map_err(|e| format!("Invalid quantum value: {e}"))?;
 
     let divisor = Decimal::from(10u64.pow(decimals));
     Ok(quantum_value / divisor)
@@ -25,7 +25,7 @@ pub fn format_price(price: Decimal) -> String {
 
 /// Parse price from string
 pub fn parse_price(price_str: &str) -> Result<Decimal, String> {
-    Decimal::from_str_exact(price_str).map_err(|e| format!("Invalid price: {}", e))
+    Decimal::from_str_exact(price_str).map_err(|e| format!("Invalid price: {e}"))
 }
 
 /// Generate random resource bounds for Starknet transactions

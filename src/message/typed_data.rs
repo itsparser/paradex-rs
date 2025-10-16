@@ -51,7 +51,7 @@ impl TypedData {
         let type_def = self
             .types
             .get(type_name)
-            .ok_or_else(|| ParadexError::SigningError(format!("Type not found: {}", type_name)))?;
+            .ok_or_else(|| ParadexError::SigningError(format!("Type not found: {type_name}")))?;
 
         let mut encoding = type_name.to_string();
         encoding.push('(');
@@ -74,7 +74,7 @@ impl TypedData {
         let type_def = self
             .types
             .get(type_name)
-            .ok_or_else(|| ParadexError::SigningError(format!("Type not found: {}", type_name)))?;
+            .ok_or_else(|| ParadexError::SigningError(format!("Type not found: {type_name}")))?;
 
         let mut values = vec![type_hash];
 
@@ -104,7 +104,7 @@ impl TypedData {
                     // Try to parse as hex or decimal
                     if s.starts_with("0x") {
                         Felt::from_hex(s)
-                            .map_err(|e| ParadexError::SigningError(format!("Invalid felt: {}", e)))
+                            .map_err(|e| ParadexError::SigningError(format!("Invalid felt: {e}")))
                     } else {
                         // Try to parse as decimal first
                         let s_clean = s.trim_end_matches(".0").trim_end_matches('.');
@@ -126,7 +126,7 @@ impl TypedData {
                 if let Value::String(s) = value {
                     if s.starts_with("0x") {
                         Felt::from_hex(s).map_err(|e| {
-                            ParadexError::SigningError(format!("Invalid value: {}", e))
+                            ParadexError::SigningError(format!("Invalid value: {e}"))
                         })
                     } else {
                         // Try decimal, fall back to short string
@@ -151,8 +151,7 @@ impl TypedData {
         // Max 31 characters
         if s.len() > 31 {
             return Err(ParadexError::SigningError(format!(
-                "String too long for short string encoding: {}",
-                s
+                "String too long for short string encoding: {s}"
             )));
         }
 

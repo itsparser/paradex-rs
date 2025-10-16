@@ -61,7 +61,7 @@ pub fn build_block_trade_message(chain_id: Felt, block_trade: &BlockTradeRequest
     TypedData {
         domain: Domain {
             name: "Paradex".to_string(),
-            chain_id: format!("{:#x}", chain_id),
+            chain_id: format!("{chain_id:#x}"),
             version: "1".to_string(),
         },
         primary_type: "BlockTrade".to_string(),
@@ -109,7 +109,7 @@ pub fn build_block_offer_message(chain_id: Felt, offer: &BlockOfferRequest) -> T
     TypedData {
         domain: Domain {
             name: "Paradex".to_string(),
-            chain_id: format!("{:#x}", chain_id),
+            chain_id: format!("{chain_id:#x}"),
             version: "1".to_string(),
         },
         primary_type: "BlockOffer".to_string(),

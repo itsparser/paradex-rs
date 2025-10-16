@@ -42,7 +42,7 @@ impl ParadexAccount {
         let l1_chain_id = config
             .l1_chain_id
             .parse::<u64>()
-            .map_err(|e| ParadexError::ConfigError(format!("Invalid L1 chain ID: {}", e)))?;
+            .map_err(|e| ParadexError::ConfigError(format!("Invalid L1 chain ID: {e}")))?;
 
         // Build stark key message and derive L2 private key
         let stark_message = build_stark_key_message(l1_chain_id);
@@ -62,10 +62,10 @@ impl ParadexAccount {
 
         // Parse system config hashes
         let account_class_hash = Felt::from_hex(&config.paraclear_account_hash)
-            .map_err(|e| ParadexError::ConfigError(format!("Invalid account hash: {}", e)))?;
+            .map_err(|e| ParadexError::ConfigError(format!("Invalid account hash: {e}")))?;
 
         let proxy_class_hash = Felt::from_hex(&config.paraclear_account_proxy_hash)
-            .map_err(|e| ParadexError::ConfigError(format!("Invalid proxy hash: {}", e)))?;
+            .map_err(|e| ParadexError::ConfigError(format!("Invalid proxy hash: {e}")))?;
 
         // Compute L2 account address
         let l2_address =
@@ -123,14 +123,14 @@ impl ParadexAccount {
     /// Sign a message hash with the L2 private key
     pub fn sign_hash(&self, hash: Felt) -> Result<(Felt, Felt)> {
         let signature = starknet_crypto::sign(&self.l2_private_key, &hash, &self.l2_public_key)
-            .map_err(|e| ParadexError::SigningError(format!("Signing failed: {}", e)))?;
+            .map_err(|e| ParadexError::SigningError(format!("Signing failed: {e}")))?;
 
         Ok((signature.r, signature.s))
     }
 
     /// Flatten signature to hex string format
     pub fn flatten_signature(r: Felt, s: Felt) -> String {
-        format!("[{:#x},{:#x}]", r, s)
+        format!("[{r:#x},{s:#x}]")
     }
 }
 

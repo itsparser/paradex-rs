@@ -10,12 +10,12 @@ pub async fn derive_stark_key(eth_private_key: &str, message: &str) -> Result<Fe
     // Parse the Ethereum private key
     let wallet: LocalWallet = eth_private_key
         .parse()
-        .map_err(|e| ParadexError::EthereumError(format!("Invalid private key: {}", e)))?;
+        .map_err(|e| ParadexError::EthereumError(format!("Invalid private key: {e}")))?;
 
     // Sign the message with the Ethereum key
     let signature = wallet
         .sign_message(message.as_bytes())
-        .map_err(|e| ParadexError::EthereumError(format!("Signing failed: {}", e)))
+        .map_err(|e| ParadexError::EthereumError(format!("Signing failed: {e}")))
         .await?;
 
     // Convert signature to bytes (r + s, 64 bytes)
@@ -35,7 +35,7 @@ pub async fn derive_stark_key(eth_private_key: &str, message: &str) -> Result<Fe
 
 /// Build the stark key derivation message for signing
 pub fn build_stark_key_message(chain_id: u64) -> String {
-    format!("Paradex Stark Key Derivation: {}", chain_id)
+    format!("Paradex Stark Key Derivation: {chain_id}")
 }
 
 /// Compute Starknet public key from private key
@@ -55,7 +55,7 @@ pub fn compute_account_address(
     // Build constructor calldata
     // [account_class_hash, initialize_selector, 2, public_key, 0]
     let initialize_selector = get_selector_from_name("initialize")
-        .map_err(|e| ParadexError::StarknetError(format!("Selector error: {}", e)))?;
+        .map_err(|e| ParadexError::StarknetError(format!("Selector error: {e}")))?;
 
     let calldata = vec![
         account_class_hash,

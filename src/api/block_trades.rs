@@ -51,13 +51,13 @@ impl<'a> BlockTradesApi<'a> {
 
     /// Get a specific block trade
     pub async fn get_block_trade(&self, block_trade_id: &str) -> Result<BlockTradeDetail> {
-        let path = format!("block-trades/{}", block_trade_id);
+        let path = format!("block-trades/{block_trade_id}");
         self.http_client.get(&path).await
     }
 
     /// Cancel a block trade
     pub async fn cancel_block_trade(&self, block_trade_id: &str) -> Result<Value> {
-        let path = format!("block-trades/{}", block_trade_id);
+        let path = format!("block-trades/{block_trade_id}");
         self.http_client.delete(&path).await
     }
 
@@ -67,7 +67,7 @@ impl<'a> BlockTradesApi<'a> {
         block_trade_id: &str,
         execution: &BlockExecuteRequest,
     ) -> Result<BlockTradeDetail> {
-        let path = format!("block-trades/{}/execute", block_trade_id);
+        let path = format!("block-trades/{block_trade_id}/execute");
         self.http_client.post(&path, execution).await
     }
 
@@ -76,7 +76,7 @@ impl<'a> BlockTradesApi<'a> {
         &self,
         block_trade_id: &str,
     ) -> Result<PaginatedResponse<BlockOfferDetail>> {
-        let path = format!("block-trades/{}/offers", block_trade_id);
+        let path = format!("block-trades/{block_trade_id}/offers");
         self.http_client.get(&path).await
     }
 
@@ -86,7 +86,7 @@ impl<'a> BlockTradesApi<'a> {
         block_trade_id: &str,
         offer: &BlockOfferRequest,
     ) -> Result<BlockOfferDetail> {
-        let path = format!("block-trades/{}/offers", block_trade_id);
+        let path = format!("block-trades/{block_trade_id}/offers");
         self.http_client.post(&path, offer).await
     }
 
@@ -96,7 +96,7 @@ impl<'a> BlockTradesApi<'a> {
         block_trade_id: &str,
         offer_id: &str,
     ) -> Result<BlockOfferDetail> {
-        let path = format!("block-trades/{}/offers/{}", block_trade_id, offer_id);
+        let path = format!("block-trades/{block_trade_id}/offers/{offer_id}");
         self.http_client.get(&path).await
     }
 
@@ -106,7 +106,7 @@ impl<'a> BlockTradesApi<'a> {
         block_trade_id: &str,
         offer_id: &str,
     ) -> Result<Value> {
-        let path = format!("block-trades/{}/offers/{}", block_trade_id, offer_id);
+        let path = format!("block-trades/{block_trade_id}/offers/{offer_id}");
         self.http_client.delete(&path).await
     }
 
@@ -118,8 +118,7 @@ impl<'a> BlockTradesApi<'a> {
         execution: &BlockExecuteRequest,
     ) -> Result<BlockOfferDetail> {
         let path = format!(
-            "block-trades/{}/offers/{}/execute",
-            block_trade_id, offer_id
+            "block-trades/{block_trade_id}/offers/{offer_id}/execute"
         );
         self.http_client.post(&path, execution).await
     }

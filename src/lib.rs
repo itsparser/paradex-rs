@@ -158,7 +158,7 @@ impl Paradex {
         // Parse L2 private key
         use starknet_types_core::felt::Felt;
         let l2_key = Felt::from_hex(&l2_private_key.into())
-            .map_err(|e| ParadexError::ConfigError(format!("Invalid L2 key: {}", e)))?;
+            .map_err(|e| ParadexError::ConfigError(format!("Invalid L2 key: {e}")))?;
 
         // Create account from L2 credentials
         let account = ParadexAccount::from_l2_private_key(&config, l1_address, l2_key)?;
@@ -240,7 +240,7 @@ impl Paradex {
 
         // Call onboarding API
         onboard(&client, &api_url, headers, &public_key_hex).await?;
-        log::info!("Onboarding successful for: {}", public_key_hex);
+        log::info!("Onboarding successful for: {public_key_hex}");
 
         Ok(())
     }
@@ -268,7 +268,7 @@ impl Paradex {
 
         // Call auth API and get JWT
         let jwt_token = authenticate(&client, &api_url, headers, &public_key_hex).await?;
-        log::info!("Authentication successful for: {}", public_key_hex);
+        log::info!("Authentication successful for: {public_key_hex}");
 
         // Store JWT in account
         let mut account_guard = account.lock().unwrap();

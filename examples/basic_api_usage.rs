@@ -15,7 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap()
         .fetch_system_config()
         .await?;
-    println!("System Config: {:?}", config);
+    println!("System Config: {config:?}");
 
     println!("\nFetching system state...");
     let state = paradex
@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap()
         .fetch_system_state()
         .await?;
-    println!("System State: {:?}", state);
+    println!("System State: {state:?}");
 
     println!("\nFetching markets...");
     let markets = paradex.api_client().lock().unwrap().fetch_markets().await?;
@@ -37,7 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap()
         .fetch_markets_summary(Some("BTC-USD-PERP"))
         .await?;
-    println!("Market Summary: {:?}", summary);
+    println!("Market Summary: {summary:?}");
 
     Ok(())
 }

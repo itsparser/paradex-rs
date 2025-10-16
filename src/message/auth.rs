@@ -51,7 +51,7 @@ pub fn build_auth_message(chain_id: Felt, timestamp: i64, expiry: i64) -> TypedD
     TypedData {
         domain: Domain {
             name: "Paradex".to_string(),
-            chain_id: format!("{:#x}", chain_id),
+            chain_id: format!("{chain_id:#x}"),
             version: "1".to_string(),
         },
         primary_type: "Auth".to_string(),
@@ -131,7 +131,7 @@ pub fn build_fullnode_message(
     TypedData {
         domain: Domain {
             name: "Paradex".to_string(),
-            chain_id: format!("{:#x}", chain_id),
+            chain_id: format!("{chain_id:#x}"),
             version: "1".to_string(),
         },
         primary_type: "FullnodeRequest".to_string(),

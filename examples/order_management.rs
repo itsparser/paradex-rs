@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .price("50000")
         .build()?;
 
-    println!("Created order: {:?}", order);
+    println!("Created order: {order:?}");
 
     // Submit order (requires authentication)
     // let result = paradex.api_client().submit_order(&order).await?;
