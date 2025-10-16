@@ -42,3 +42,8 @@ rust_decimal = "1.35"
 [dev-dependencies]
 tokio-test = "0.4"
 mockito = "1.5"
+
+[patch.crates-io]
+# Workaround for size-of v0.1.5 ABI issues on Linux x86_64
+# Uses the latest git version which may have fixes
+size-of = { git = "https://github.com/Kixiron/size-of", rev = "fd5949ad537bb42b7f0a8acc372215a64f3533e5" }

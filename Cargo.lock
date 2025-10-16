@@ -3844,8 +3844,7 @@ checksum = "56199f7ddabf13fe5074ce809e7d3f42b42ae711800501b5b16ea82ad029c39d"
 [[package]]
 name = "size-of"
 version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4e36eca171fddeda53901b0a436573b3f2391eaa9189d439b2bd8ea8cebd7e3"
+source = "git+https://github.com/Kixiron/size-of?rev=fd5949ad537bb42b7f0a8acc372215a64f3533e5#fd5949ad537bb42b7f0a8acc372215a64f3533e5"
 
 [[package]]
 name = "slab"
