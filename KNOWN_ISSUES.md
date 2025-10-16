@@ -41,8 +41,17 @@ Modify `.github/workflows/clippy.yml` to use Rust 1.83.0 or earlier:
 #### Option 3: Allow Deprecated ABIs in CI (Not Recommended)
 This requires editing the workflow to set RUSTFLAGS, but may mask other issues.
 
+### Current Status
+**CI workflows temporarily disabled** due to this issue.
+
+The problem affects both old and new Rust versions:
+- Rust 1.83.0 and earlier: Can't compile base64ct v1.8.0 (requires edition 2024)
+- Rust 1.84.0 and later: Can't compile size-of v0.1.5 (ABI hard errors)
+
+Even patching to the git version of size-of doesn't resolve the issue - the crate still uses unsupported ABIs.
+
 ### Recommended Action
-Use Option 2 (pin to Rust 1.83.0) until the starknet ecosystem updates dependencies.
+Local development works fine. CI is temporarily disabled until upstream fixes land.
 
 ### Tracking
 - Rust issue: https://github.com/rust-lang/rust/issues/130260
