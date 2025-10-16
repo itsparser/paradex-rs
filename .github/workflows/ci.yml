@@ -10,6 +10,9 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  # Allow unsupported ABIs to work around size-of v0.1.5 issues
+  # This is safe because size-of is only a transitive dependency
+  RUSTFLAGS: -D warnings -A unsupported_calling_conventions
 
 jobs:
   clippy:
