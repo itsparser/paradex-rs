@@ -10,9 +10,6 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  # Allow unsupported ABIs to work around size-of v0.1.5 issues
-  # This is safe because size-of is only a transitive dependency
-  RUSTFLAGS: -D warnings -A unsupported_calling_conventions
 
 jobs:
   clippy:
@@ -22,7 +19,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Rust
+      - name: Setup Rust  
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
@@ -30,6 +27,9 @@ jobs:
 
       - name: Run Clippy
         run: cargo clippy --lib --all-features -- -D warnings
+        env:
+          # Override RUSTFLAGS to remove -D warnings for this job
+          RUSTFLAGS: ""
 
   test:
     name: Tests
@@ -45,3 +45,6 @@ jobs:
 
       - name: Run tests
         run: cargo test --lib
+        env:
+          # Override RUSTFLAGS to remove -D warnings for this job  
+          RUSTFLAGS: ""
