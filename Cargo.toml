@@ -1,7 +1,7 @@
 [package]
 name = "paradex-rs"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 authors = ["Paradex Contributors"]
 description = "Rust SDK for Paradex - A decentralized derivatives exchange"
 license = "MIT"
