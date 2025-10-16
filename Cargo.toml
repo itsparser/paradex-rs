@@ -1,0 +1,47 @@
+[package]
+name = "paradex-rs"
+version = "0.1.0"
+edition = "2021"
+authors = ["Paradex Contributors"]
+description = "Rust SDK for Paradex - A decentralized derivatives exchange"
+license = "MIT"
+repository = "https://github.com/paradex/paradex-rs"
+
+[dependencies]
+# HTTP client
+reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+# Async runtime
+tokio = { version = "1.40", features = ["full"] }
+# WebSocket support
+tokio-tungstenite = { version = "0.24", features = ["native-tls"] }
+futures = "0.3"
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+# Cryptography
+starknet-crypto = "0.7"
+starknet-types-core = "0.1"
+starknet-core = "0.12"
+starknet-providers = "0.12"
+starknet-signers = "0.10"
+starknet-accounts = "0.12"
+# Ethereum support
+ethers = "2.0"
+tiny-keccak = { version = "2.0", features = ["keccak"] }
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+# Logging
+log = "0.4"
+env_logger = "0.11"
+# Time
+chrono = "0.4"
+# Utilities
+hex = "0.4"
+url = "2.5"
+async-trait = "0.1"
+rust_decimal = "1.35"
+
+[dev-dependencies]
+tokio-test = "0.4"
+mockito = "1.5"
