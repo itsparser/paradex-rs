@@ -5,7 +5,7 @@ use crate::{
     error::{ParadexError, Result},
     types::SystemConfig,
 };
-use starknet_crypto::FieldElement;
+use starknet_types_core::felt::Felt;
 
 /// Paradex account with L1 and L2 key management
 pub struct ParadexAccount {
@@ -13,16 +13,16 @@ pub struct ParadexAccount {
     pub l1_address: String,
 
     /// Starknet (L2) account address
-    pub l2_address: FieldElement,
+    pub l2_address: Felt,
 
     /// Starknet public key
-    pub l2_public_key: FieldElement,
+    pub l2_public_key: Felt,
 
     /// Starknet private key (kept private)
-    l2_private_key: FieldElement,
+    l2_private_key: Felt,
 
     /// L2 chain ID
-    chain_id: FieldElement,
+    chain_id: Felt,
 
     /// JWT token for authentication
     pub jwt_token: Option<String>,
@@ -30,7 +30,7 @@ pub struct ParadexAccount {
 
 impl ParadexAccount {
     /// Create a new account from L1 private key (derives L2 key)
-    pub fn from_l1_private_key(
+    pub async fn from_l1_private_key(
         config: &SystemConfig,
         l1_address: impl Into<String>,
         l1_private_key: impl Into<String>,
@@ -39,12 +39,14 @@ impl ParadexAccount {
         let l1_private_key = l1_private_key.into();
 
         // Parse L1 chain ID
-        let l1_chain_id = config.l1_chain_id.parse::<u64>()
+        let l1_chain_id = config
+            .l1_chain_id
+            .parse::<u64>()
             .map_err(|e| ParadexError::ConfigError(format!("Invalid L1 chain ID: {}", e)))?;
 
         // Build stark key message and derive L2 private key
         let stark_message = build_stark_key_message(l1_chain_id);
-        let l2_private_key = derive_stark_key(&l1_private_key, &stark_message)?;
+        let l2_private_key = derive_stark_key(&l1_private_key, &stark_message).await?;
 
         Self::from_l2_private_key(config, l1_address, l2_private_key)
     }
@@ -53,28 +55,29 @@ impl ParadexAccount {
     pub fn from_l2_private_key(
         config: &SystemConfig,
         l1_address: impl Into<String>,
-        l2_private_key: FieldElement,
+        l2_private_key: Felt,
     ) -> Result<Self> {
         // Compute public key from private key
         let l2_public_key = compute_public_key(l2_private_key)?;
 
         // Parse system config hashes
-        let account_class_hash = FieldElement::from_hex_be(&config.paraclear_account_hash)
+        let account_class_hash = Felt::from_hex(&config.paraclear_account_hash)
             .map_err(|e| ParadexError::ConfigError(format!("Invalid account hash: {}", e)))?;
 
-        let proxy_class_hash = FieldElement::from_hex_be(&config.paraclear_account_proxy_hash)
+        let proxy_class_hash = Felt::from_hex(&config.paraclear_account_proxy_hash)
             .map_err(|e| ParadexError::ConfigError(format!("Invalid proxy hash: {}", e)))?;
 
         // Compute L2 account address
-        let l2_address = compute_account_address(
-            l2_public_key,
-            account_class_hash,
-            proxy_class_hash,
-        )?;
+        let l2_address =
+            compute_account_address(l2_public_key, account_class_hash, proxy_class_hash)?;
 
-        // Parse L2 chain ID
-        let chain_id = FieldElement::from_byte_slice_be(config.starknet_chain_id.as_bytes())
-            .map_err(|e| ParadexError::ConfigError(format!("Invalid chain ID: {}", e)))?;
+        // Parse L2 chain ID from string (e.g., "SN_MAIN")
+        // For now, use a simple hash of the chain ID string
+        let mut chain_bytes = [0u8; 32];
+        let id_bytes = config.starknet_chain_id.as_bytes();
+        let copy_len = id_bytes.len().min(32);
+        chain_bytes[32 - copy_len..].copy_from_slice(&id_bytes[..copy_len]);
+        let chain_id = Felt::from_bytes_be(&chain_bytes);
 
         Ok(Self {
             l1_address: l1_address.into(),
@@ -97,12 +100,12 @@ impl ParadexAccount {
     }
 
     /// Get L2 private key (for signing)
-    pub(crate) fn l2_private_key(&self) -> FieldElement {
+    pub(crate) fn l2_private_key(&self) -> Felt {
         self.l2_private_key
     }
 
     /// Get chain ID
-    pub fn chain_id(&self) -> FieldElement {
+    pub fn chain_id(&self) -> Felt {
         self.chain_id
     }
 
@@ -117,7 +120,7 @@ impl ParadexAccount {
     }
 
     /// Sign a message hash with the L2 private key
-    pub fn sign_hash(&self, hash: FieldElement) -> Result<(FieldElement, FieldElement)> {
+    pub fn sign_hash(&self, hash: Felt) -> Result<(Felt, Felt)> {
         let signature = starknet_crypto::sign(&self.l2_private_key, &hash, &self.l2_public_key)
             .map_err(|e| ParadexError::SigningError(format!("Signing failed: {}", e)))?;
 
@@ -125,7 +128,7 @@ impl ParadexAccount {
     }
 
     /// Flatten signature to hex string format
-    pub fn flatten_signature(r: FieldElement, s: FieldElement) -> String {
+    pub fn flatten_signature(r: Felt, s: Felt) -> String {
         format!("[{:#x},{:#x}]", r, s)
     }
 }
@@ -151,8 +154,10 @@ mod tests {
             starknet_chain_id: "SN_MAIN".to_string(),
             starknet_fullnode_rpc_url: "http://localhost".to_string(),
             paraclear_address: "0x123".to_string(),
-            paraclear_account_proxy_hash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef".to_string(),
-            paraclear_account_hash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890".to_string(),
+            paraclear_account_proxy_hash:
+                "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef".to_string(),
+            paraclear_account_hash:
+                "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890".to_string(),
             paraclear_decimals: 8,
             bridged_tokens: vec![],
         }
@@ -161,9 +166,9 @@ mod tests {
     #[test]
     fn test_account_from_l2_key() {
         let config = mock_system_config();
-        let l2_key = FieldElement::from_hex_be(
-            "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
-        ).unwrap();
+        let l2_key =
+            Felt::from_hex("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
+                .unwrap();
 
         let account = ParadexAccount::from_l2_private_key(
             &config,
@@ -173,13 +178,16 @@ mod tests {
 
         assert!(account.is_ok());
         let account = account.unwrap();
-        assert_eq!(account.l1_address, "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb");
+        assert_eq!(
+            account.l1_address,
+            "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
+        );
     }
 
     #[test]
     fn test_flatten_signature() {
-        let r = FieldElement::from_hex_be("0x123").unwrap();
-        let s = FieldElement::from_hex_be("0x456").unwrap();
+        let r = Felt::from_hex("0x123").unwrap();
+        let s = Felt::from_hex("0x456").unwrap();
         let flattened = ParadexAccount::flatten_signature(r, s);
         assert!(flattened.starts_with("["));
         assert!(flattened.ends_with("]"));

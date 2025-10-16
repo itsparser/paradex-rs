@@ -1,7 +1,10 @@
 use crate::{
     account::ParadexAccount,
     error::Result,
-    message::{build_auth_message, build_modify_order_message, build_onboarding_message, build_order_message},
+    message::{
+        build_auth_message, build_modify_order_message, build_onboarding_message,
+        build_order_message,
+    },
     types::Order,
 };
 use chrono::Utc;
@@ -16,9 +19,9 @@ impl ParadexAccount {
 
         // Build the appropriate message based on whether it's a modification
         let typed_data = if order.id.is_some() {
-            build_modify_order_message(self.chain_id, order)
+            build_modify_order_message(self.chain_id(), order)
         } else {
-            build_order_message(self.chain_id, order)
+            build_order_message(self.chain_id(), order)
         };
 
         // Compute message hash
@@ -38,14 +41,20 @@ impl ParadexAccount {
 
     /// Generate authentication headers for onboarding
     pub fn onboarding_headers(&self) -> Result<Vec<(String, String)>> {
-        let typed_data = build_onboarding_message(self.chain_id);
+        let typed_data = build_onboarding_message(self.chain_id());
         let message_hash = typed_data.message_hash()?;
         let (r, s) = self.sign_hash(message_hash)?;
         let signature = Self::flatten_signature(r, s);
 
         Ok(vec![
-            ("PARADEX-ETHEREUM-ACCOUNT".to_string(), self.l1_address.clone()),
-            ("PARADEX-STARKNET-ACCOUNT".to_string(), self.l2_address_hex()),
+            (
+                "PARADEX-ETHEREUM-ACCOUNT".to_string(),
+                self.l1_address.clone(),
+            ),
+            (
+                "PARADEX-STARKNET-ACCOUNT".to_string(),
+                self.l2_address_hex(),
+            ),
             ("PARADEX-STARKNET-SIGNATURE".to_string(), signature),
         ])
     }
@@ -55,16 +64,22 @@ impl ParadexAccount {
         let timestamp = Utc::now().timestamp();
         let expiry = timestamp + 24 * 60 * 60; // 24 hours
 
-        let typed_data = build_auth_message(self.chain_id, timestamp, expiry);
+        let typed_data = build_auth_message(self.chain_id(), timestamp, expiry);
         let message_hash = typed_data.message_hash()?;
         let (r, s) = self.sign_hash(message_hash)?;
         let signature = Self::flatten_signature(r, s);
 
         Ok(vec![
-            ("PARADEX-STARKNET-ACCOUNT".to_string(), self.l2_address_hex()),
+            (
+                "PARADEX-STARKNET-ACCOUNT".to_string(),
+                self.l2_address_hex(),
+            ),
             ("PARADEX-STARKNET-SIGNATURE".to_string(), signature),
             ("PARADEX-TIMESTAMP".to_string(), timestamp.to_string()),
-            ("PARADEX-SIGNATURE-EXPIRATION".to_string(), expiry.to_string()),
+            (
+                "PARADEX-SIGNATURE-EXPIRATION".to_string(),
+                expiry.to_string(),
+            ),
         ])
     }
 }
@@ -73,7 +88,7 @@ impl ParadexAccount {
 mod tests {
     use super::*;
     use crate::types::{OrderSide, OrderType, SystemConfig};
-    use starknet_crypto::FieldElement;
+    use starknet_types_core::felt::Felt;
 
     fn mock_config() -> SystemConfig {
         SystemConfig {
@@ -81,8 +96,10 @@ mod tests {
             starknet_chain_id: "SN_MAIN".to_string(),
             starknet_fullnode_rpc_url: "http://localhost".to_string(),
             paraclear_address: "0x123".to_string(),
-            paraclear_account_proxy_hash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef".to_string(),
-            paraclear_account_hash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890".to_string(),
+            paraclear_account_proxy_hash:
+                "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef".to_string(),
+            paraclear_account_hash:
+                "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890".to_string(),
             paraclear_decimals: 8,
             bridged_tokens: vec![],
         }
@@ -91,15 +108,16 @@ mod tests {
     #[test]
     fn test_sign_order() {
         let config = mock_config();
-        let private_key = FieldElement::from_hex_be(
-            "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
-        ).unwrap();
+        let private_key =
+            Felt::from_hex("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
+                .unwrap();
 
         let account = ParadexAccount::from_l2_private_key(
             &config,
             "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
             private_key,
-        ).unwrap();
+        )
+        .unwrap();
 
         let mut order = Order {
             market: "BTC-USD-PERP".to_string(),
@@ -125,15 +143,16 @@ mod tests {
     #[test]
     fn test_onboarding_headers() {
         let config = mock_config();
-        let private_key = FieldElement::from_hex_be(
-            "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
-        ).unwrap();
+        let private_key =
+            Felt::from_hex("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
+                .unwrap();
 
         let account = ParadexAccount::from_l2_private_key(
             &config,
             "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
             private_key,
-        ).unwrap();
+        )
+        .unwrap();
 
         let headers = account.onboarding_headers();
         assert!(headers.is_ok());

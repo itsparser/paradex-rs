@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// System configuration from Paradex API
 #[derive(Debug, Clone, Serialize, Deserialize)]

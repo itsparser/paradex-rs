@@ -29,17 +29,19 @@
 //! }
 //! ```
 
-pub mod api;
 pub mod account;
+pub mod api;
 pub mod constants;
 pub mod environment;
 pub mod error;
 pub mod message;
+pub mod subkey;
 pub mod types;
 pub mod utils;
 
 pub use environment::Environment;
 pub use error::{ParadexError, Result};
+pub use subkey::{ParadexSubkey, SubkeyAccount};
 pub use types::*;
 
 use account::ParadexAccount;
@@ -125,7 +127,8 @@ impl Paradex {
         let config = paradex.fetch_and_store_config().await?;
 
         // Create account from L1 credentials
-        let account = ParadexAccount::from_l1_private_key(&config, l1_address, l1_private_key)?;
+        let account =
+            ParadexAccount::from_l1_private_key(&config, l1_address, l1_private_key).await?;
         paradex.account = Some(Arc::new(Mutex::new(account)));
 
         // Perform authentication flow
@@ -152,7 +155,8 @@ impl Paradex {
         let config = paradex.fetch_and_store_config().await?;
 
         // Parse L2 private key
-        let l2_key = starknet_crypto::FieldElement::from_hex_be(&l2_private_key.into())
+        use starknet_types_core::felt::Felt;
+        let l2_key = Felt::from_hex(&l2_private_key.into())
             .map_err(|e| ParadexError::ConfigError(format!("Invalid L2 key: {}", e)))?;
 
         // Create account from L2 credentials
@@ -187,14 +191,21 @@ impl Paradex {
 
     /// Fetch and store system configuration
     async fn fetch_and_store_config(&mut self) -> Result<SystemConfig> {
-        let config = self.api_client.lock().unwrap().fetch_system_config().await?;
+        let config = self
+            .api_client
+            .lock()
+            .unwrap()
+            .fetch_system_config()
+            .await?;
         self.config = Some(config.clone());
         Ok(config)
     }
 
     /// Perform onboarding and authentication
     async fn authenticate(&self) -> Result<()> {
-        let account = self.account.as_ref()
+        let account = self
+            .account
+            .as_ref()
             .ok_or_else(|| ParadexError::AuthError("No account initialized".to_string()))?;
 
         // Step 1: Onboarding (may fail if already onboarded, that's ok)
@@ -208,7 +219,9 @@ impl Paradex {
 
     /// Perform onboarding
     async fn onboard(&self) -> Result<()> {
-        let account = self.account.as_ref()
+        let account = self
+            .account
+            .as_ref()
             .ok_or_else(|| ParadexError::AuthError("No account initialized".to_string()))?;
 
         let account_guard = account.lock().unwrap();
@@ -233,7 +246,9 @@ impl Paradex {
 
     /// Authenticate to get JWT token
     async fn auth(&self) -> Result<()> {
-        let account = self.account.as_ref()
+        let account = self
+            .account
+            .as_ref()
             .ok_or_else(|| ParadexError::AuthError("No account initialized".to_string()))?;
 
         let account_guard = account.lock().unwrap();

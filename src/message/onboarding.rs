@@ -1,9 +1,9 @@
 use crate::message::typed_data::{Domain, TypeMember, TypedData};
+use starknet_types_core::felt::Felt;
 use std::collections::HashMap;
-use starknet_crypto::FieldElement;
 
 /// Build onboarding message for signing
-pub fn build_onboarding_message(chain_id: FieldElement) -> TypedData {
+pub fn build_onboarding_message(chain_id: Felt) -> TypedData {
     let mut types = HashMap::new();
 
     // Define StarkNetDomain type
@@ -48,7 +48,7 @@ mod tests {
 
     #[test]
     fn test_build_onboarding_message() {
-        let chain_id = FieldElement::from_hex_be("0x1").unwrap();
+        let chain_id = Felt::from_hex("0x1").unwrap();
         let typed_data = build_onboarding_message(chain_id);
 
         assert_eq!(typed_data.primary_type, "Onboarding");

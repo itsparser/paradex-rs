@@ -1,12 +1,12 @@
 use crate::error::{ParadexError, Result};
-use ethers::core::k256::ecdsa::SigningKey;
 use ethers::signers::{LocalWallet, Signer};
-use starknet_crypto::FieldElement;
+use futures::TryFutureExt;
+use starknet_types_core::felt::Felt;
 use tiny_keccak::{Hasher, Keccak};
 
 /// Derive Stark key from Ethereum private key
 /// This matches the Python SDK's stark key derivation logic
-pub fn derive_stark_key(eth_private_key: &str, message: &str) -> Result<FieldElement> {
+pub async fn derive_stark_key(eth_private_key: &str, message: &str) -> Result<Felt> {
     // Parse the Ethereum private key
     let wallet: LocalWallet = eth_private_key
         .parse()
@@ -15,7 +15,8 @@ pub fn derive_stark_key(eth_private_key: &str, message: &str) -> Result<FieldEle
     // Sign the message with the Ethereum key
     let signature = wallet
         .sign_message(message.as_bytes())
-        .map_err(|e| ParadexError::EthereumError(format!("Signing failed: {}", e)))?;
+        .map_err(|e| ParadexError::EthereumError(format!("Signing failed: {}", e)))
+        .await?;
 
     // Convert signature to bytes (r + s, 64 bytes)
     let sig_bytes = signature.to_vec();
@@ -26,9 +27,8 @@ pub fn derive_stark_key(eth_private_key: &str, message: &str) -> Result<FieldEle
     let mut output = [0u8; 32];
     hasher.finalize(&mut output);
 
-    // Convert to FieldElement, ensuring it's within the field
-    let stark_key = FieldElement::from_bytes_be(&output)
-        .map_err(|e| ParadexError::StarknetError(format!("Invalid field element: {}", e)))?;
+    // Convert to Felt, ensuring it's within the field
+    let stark_key = Felt::from_bytes_be(&output);
 
     Ok(stark_key)
 }
@@ -39,17 +39,17 @@ pub fn build_stark_key_message(chain_id: u64) -> String {
 }
 
 /// Compute Starknet public key from private key
-pub fn compute_public_key(private_key: FieldElement) -> Result<FieldElement> {
+pub fn compute_public_key(private_key: Felt) -> Result<Felt> {
     let public_key = starknet_crypto::get_public_key(&private_key);
     Ok(public_key)
 }
 
 /// Compute Paradex account address from public key and system config
 pub fn compute_account_address(
-    public_key: FieldElement,
-    account_class_hash: FieldElement,
-    proxy_class_hash: FieldElement,
-) -> Result<FieldElement> {
+    public_key: Felt,
+    account_class_hash: Felt,
+    proxy_class_hash: Felt,
+) -> Result<Felt> {
     use starknet_core::utils::get_selector_from_name;
 
     // Build constructor calldata
@@ -60,9 +60,9 @@ pub fn compute_account_address(
     let calldata = vec![
         account_class_hash,
         initialize_selector,
-        FieldElement::TWO,
+        Felt::TWO,
         public_key,
-        FieldElement::ZERO,
+        Felt::ZERO,
     ];
 
     // Compute contract address
@@ -70,7 +70,7 @@ pub fn compute_account_address(
         public_key, // salt
         proxy_class_hash,
         &calldata,
-        FieldElement::ZERO, // deployer_address
+        Felt::ZERO, // deployer_address
     );
 
     Ok(address)
@@ -89,9 +89,9 @@ mod tests {
     #[test]
     fn test_compute_public_key() {
         // Test with a known private key
-        let private_key = FieldElement::from_hex_be(
-            "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
-        ).unwrap();
+        let private_key =
+            Felt::from_hex("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
+                .unwrap();
 
         let public_key = compute_public_key(private_key);
         assert!(public_key.is_ok());

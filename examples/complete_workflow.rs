@@ -9,8 +9,7 @@
 //! - Position and balance queries
 
 use paradex_rs::{
-    Environment, Order, OrderSide, OrderType, OrderInstruction,
-    Paradex, WebSocketChannel,
+    Environment, Order, OrderInstruction, OrderSide, OrderType, Paradex, WebSocketChannel,
 };
 
 #[tokio::main]
@@ -27,8 +26,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Step 2: Fetch system configuration
     println!("Step 2: Fetching system configuration...");
-    let config = paradex.api_client().lock().unwrap()
-        .fetch_system_config().await?;
+    let config = paradex
+        .api_client()
+        .lock()
+        .unwrap()
+        .fetch_system_config()
+        .await?;
     println!("✓ System config loaded");
     println!("  - L1 Chain ID: {}", config.l1_chain_id);
     println!("  - L2 Chain ID: {}", config.starknet_chain_id);
@@ -36,8 +39,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Step 3: Fetch markets
     println!("Step 3: Fetching available markets...");
-    let markets = paradex.api_client().lock().unwrap()
-        .fetch_markets().await?;
+    let markets = paradex.api_client().lock().unwrap().fetch_markets().await?;
     println!("✓ Found {} markets", markets.results.len());
     if let Some(first_market) = markets.results.first() {
         println!("  - Example market: {}", first_market.symbol);
@@ -46,8 +48,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Step 4: Fetch market summary
     println!("Step 4: Fetching BTC-USD-PERP market summary...");
-    let summary = paradex.api_client().lock().unwrap()
-        .fetch_markets_summary(Some("BTC-USD-PERP")).await?;
+    let summary = paradex
+        .api_client()
+        .lock()
+        .unwrap()
+        .fetch_markets_summary(Some("BTC-USD-PERP"))
+        .await?;
     if let Some(btc_summary) = summary.results.first() {
         println!("✓ Market Summary:");
         println!("  - Symbol: {}", btc_summary.symbol);
@@ -62,8 +68,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Step 5: Fetch orderbook
     println!("Step 5: Fetching orderbook...");
-    let orderbook = paradex.api_client().lock().unwrap()
-        .fetch_orderbook("BTC-USD-PERP", Some(5)).await?;
+    let orderbook = paradex
+        .api_client()
+        .lock()
+        .unwrap()
+        .fetch_orderbook("BTC-USD-PERP", Some(5))
+        .await?;
     println!("✓ Orderbook loaded");
     println!("  - Bids: {}", orderbook.bids.len());
     println!("  - Asks: {}", orderbook.asks.len());

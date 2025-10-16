@@ -1,9 +1,4 @@
-use crate::{
-    api::http_client::HttpClient,
-    environment::Environment,
-    error::Result,
-    types::*,
-};
+use crate::{api::http_client::HttpClient, environment::Environment, error::Result, types::*};
 use std::collections::HashMap;
 
 /// API client for interacting with Paradex REST API
@@ -65,7 +60,11 @@ impl ApiClient {
         market: Option<&str>,
     ) -> Result<PaginatedResponse<MarketSummary>> {
         match market {
-            Some(m) => self.http_client.get_with_params("markets/summary", &[("market", m)]).await,
+            Some(m) => {
+                self.http_client
+                    .get_with_params("markets/summary", &[("market", m)])
+                    .await
+            }
             None => self.http_client.get("markets/summary").await,
         }
     }
@@ -103,7 +102,11 @@ impl ApiClient {
         market: Option<&str>,
     ) -> Result<PaginatedResponse<serde_json::Value>> {
         match market {
-            Some(m) => self.http_client.get_with_params("funding/data", &[("market", m)]).await,
+            Some(m) => {
+                self.http_client
+                    .get_with_params("funding/data", &[("market", m)])
+                    .await
+            }
             None => self.http_client.get("funding/data").await,
         }
     }
@@ -146,9 +149,16 @@ impl ApiClient {
     }
 
     /// Fetch open orders
-    pub async fn fetch_orders(&self, market: Option<&str>) -> Result<PaginatedResponse<OrderResponse>> {
+    pub async fn fetch_orders(
+        &self,
+        market: Option<&str>,
+    ) -> Result<PaginatedResponse<OrderResponse>> {
         match market {
-            Some(m) => self.http_client.get_with_params("orders", &[("market", m)]).await,
+            Some(m) => {
+                self.http_client
+                    .get_with_params("orders", &[("market", m)])
+                    .await
+            }
             None => self.http_client.get("orders").await,
         }
     }
@@ -223,13 +233,19 @@ impl ApiClient {
         if let Some(ids) = client_order_ids {
             body.insert("client_order_ids", ids);
         }
-        self.http_client.delete_with_body("orders/batch", &body).await
+        self.http_client
+            .delete_with_body("orders/batch", &body)
+            .await
     }
 
     /// Fetch fills
     pub async fn fetch_fills(&self, market: Option<&str>) -> Result<PaginatedResponse<Fill>> {
         match market {
-            Some(m) => self.http_client.get_with_params("fills", &[("market", m)]).await,
+            Some(m) => {
+                self.http_client
+                    .get_with_params("fills", &[("market", m)])
+                    .await
+            }
             None => self.http_client.get("fills").await,
         }
     }
@@ -273,5 +289,138 @@ impl ApiClient {
     pub async fn fetch_points_data(&self, market: &str, program: &str) -> Result<PointsData> {
         let path = format!("points_data/{}/{}", market, program);
         self.http_client.get(&path).await
+    }
+
+    /// Fetch OHLCV klines data for a market
+    pub async fn fetch_klines(
+        &self,
+        symbol: &str,
+        resolution: &str,
+        start_at: i64,
+        end_at: i64,
+        price_kind: Option<&str>,
+    ) -> Result<serde_json::Value> {
+        let start_at_str = start_at.to_string();
+        let end_at_str = end_at.to_string();
+
+        let mut params = vec![
+            ("symbol", symbol),
+            ("resolution", resolution),
+            ("start_at", start_at_str.as_str()),
+            ("end_at", end_at_str.as_str()),
+        ];
+
+        let price_kind_str;
+        if let Some(pk) = price_kind {
+            price_kind_str = pk.to_string();
+            params.push(("price_kind", &price_kind_str));
+        }
+
+        self.http_client
+            .get_with_params("markets/klines", &params)
+            .await
+    }
+
+    // BLOCK TRADES API
+
+    /// List block trades
+    pub async fn list_block_trades(
+        &self,
+        status: Option<&str>,
+        market: Option<&str>,
+    ) -> Result<PaginatedResponse<BlockTradeDetail>> {
+        let block_trades = crate::api::block_trades::BlockTradesApi::new(&self.http_client);
+        block_trades.list_block_trades(status, market).await
+    }
+
+    /// Create a block trade
+    pub async fn create_block_trade(
+        &self,
+        block_trade: &BlockTradeRequest,
+    ) -> Result<BlockTradeDetail> {
+        let block_trades = crate::api::block_trades::BlockTradesApi::new(&self.http_client);
+        block_trades.create_block_trade(block_trade).await
+    }
+
+    /// Get a block trade by ID
+    pub async fn get_block_trade(&self, block_trade_id: &str) -> Result<BlockTradeDetail> {
+        let block_trades = crate::api::block_trades::BlockTradesApi::new(&self.http_client);
+        block_trades.get_block_trade(block_trade_id).await
+    }
+
+    /// Cancel a block trade
+    pub async fn cancel_block_trade(&self, block_trade_id: &str) -> Result<serde_json::Value> {
+        let block_trades = crate::api::block_trades::BlockTradesApi::new(&self.http_client);
+        block_trades.cancel_block_trade(block_trade_id).await
+    }
+
+    /// Execute a block trade
+    pub async fn execute_block_trade(
+        &self,
+        block_trade_id: &str,
+        execution: &BlockExecuteRequest,
+    ) -> Result<BlockTradeDetail> {
+        let block_trades = crate::api::block_trades::BlockTradesApi::new(&self.http_client);
+        block_trades
+            .execute_block_trade(block_trade_id, execution)
+            .await
+    }
+
+    /// Get offers for a block trade
+    pub async fn get_block_trade_offers(
+        &self,
+        block_trade_id: &str,
+    ) -> Result<PaginatedResponse<BlockOfferDetail>> {
+        let block_trades = crate::api::block_trades::BlockTradesApi::new(&self.http_client);
+        block_trades.get_block_trade_offers(block_trade_id).await
+    }
+
+    /// Create an offer for a block trade
+    pub async fn create_block_trade_offer(
+        &self,
+        block_trade_id: &str,
+        offer: &BlockOfferRequest,
+    ) -> Result<BlockOfferDetail> {
+        let block_trades = crate::api::block_trades::BlockTradesApi::new(&self.http_client);
+        block_trades
+            .create_block_trade_offer(block_trade_id, offer)
+            .await
+    }
+
+    /// Get a specific offer
+    pub async fn get_block_trade_offer(
+        &self,
+        block_trade_id: &str,
+        offer_id: &str,
+    ) -> Result<BlockOfferDetail> {
+        let block_trades = crate::api::block_trades::BlockTradesApi::new(&self.http_client);
+        block_trades
+            .get_block_trade_offer(block_trade_id, offer_id)
+            .await
+    }
+
+    /// Cancel an offer
+    pub async fn cancel_block_trade_offer(
+        &self,
+        block_trade_id: &str,
+        offer_id: &str,
+    ) -> Result<serde_json::Value> {
+        let block_trades = crate::api::block_trades::BlockTradesApi::new(&self.http_client);
+        block_trades
+            .cancel_block_trade_offer(block_trade_id, offer_id)
+            .await
+    }
+
+    /// Execute a specific offer
+    pub async fn execute_block_trade_offer(
+        &self,
+        block_trade_id: &str,
+        offer_id: &str,
+        execution: &BlockExecuteRequest,
+    ) -> Result<BlockOfferDetail> {
+        let block_trades = crate::api::block_trades::BlockTradesApi::new(&self.http_client);
+        block_trades
+            .execute_block_trade_offer(block_trade_id, offer_id, execution)
+            .await
     }
 }

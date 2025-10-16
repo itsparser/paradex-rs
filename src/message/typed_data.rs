@@ -1,8 +1,8 @@
 use crate::error::{ParadexError, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use starknet_crypto::FieldElement;
 use starknet_core::utils::starknet_keccak;
+use starknet_types_core::felt::Felt;
 use std::collections::HashMap;
 
 /// EIP-712 style typed data for Starknet
@@ -32,7 +32,7 @@ pub struct TypeMember {
 
 impl TypedData {
     /// Compute the message hash for signing
-    pub fn message_hash(&self) -> Result<FieldElement> {
+    pub fn message_hash(&self) -> Result<Felt> {
         // Encode domain
         let domain_hash = self.encode_type("StarkNetDomain")?;
 
@@ -47,8 +47,10 @@ impl TypedData {
         Ok(message_hash)
     }
 
-    fn encode_type(&self, type_name: &str) -> Result<FieldElement> {
-        let type_def = self.types.get(type_name)
+    fn encode_type(&self, type_name: &str) -> Result<Felt> {
+        let type_def = self
+            .types
+            .get(type_name)
             .ok_or_else(|| ParadexError::SigningError(format!("Type not found: {}", type_name)))?;
 
         let mut encoding = type_name.to_string();
@@ -66,17 +68,20 @@ impl TypedData {
         Ok(hash)
     }
 
-    fn encode_message(&self, type_name: &str) -> Result<FieldElement> {
+    fn encode_message(&self, type_name: &str) -> Result<Felt> {
         let type_hash = self.encode_type(type_name)?;
 
-        let type_def = self.types.get(type_name)
+        let type_def = self
+            .types
+            .get(type_name)
             .ok_or_else(|| ParadexError::SigningError(format!("Type not found: {}", type_name)))?;
 
         let mut values = vec![type_hash];
 
         for member in type_def {
-            let value = self.message.get(&member.name)
-                .ok_or_else(|| ParadexError::SigningError(format!("Missing field: {}", member.name)))?;
+            let value = self.message.get(&member.name).ok_or_else(|| {
+                ParadexError::SigningError(format!("Missing field: {}", member.name))
+            })?;
 
             let encoded_value = self.encode_value(&member.type_name, value)?;
             values.push(encoded_value);
@@ -92,34 +97,40 @@ impl TypedData {
         Ok(hash)
     }
 
-    fn encode_value(&self, type_name: &str, value: &Value) -> Result<FieldElement> {
+    fn encode_value(&self, type_name: &str, value: &Value) -> Result<Felt> {
         match type_name {
             "felt" => {
                 if let Value::String(s) = value {
                     // Try to parse as hex or decimal
                     if s.starts_with("0x") {
-                        FieldElement::from_hex_be(s)
+                        Felt::from_hex(s)
                             .map_err(|e| ParadexError::SigningError(format!("Invalid felt: {}", e)))
                     } else {
-                        FieldElement::from_dec_str(s)
+                        Felt::from_dec_str(s)
                             .map_err(|e| ParadexError::SigningError(format!("Invalid felt: {}", e)))
                     }
                 } else {
-                    Err(ParadexError::SigningError("Expected string for felt".to_string()))
+                    Err(ParadexError::SigningError(
+                        "Expected string for felt".to_string(),
+                    ))
                 }
             }
             _ => {
                 // For other types, try to encode as felt
                 if let Value::String(s) = value {
                     if s.starts_with("0x") {
-                        FieldElement::from_hex_be(s)
-                            .map_err(|e| ParadexError::SigningError(format!("Invalid value: {}", e)))
+                        Felt::from_hex(s).map_err(|e| {
+                            ParadexError::SigningError(format!("Invalid value: {}", e))
+                        })
                     } else {
-                        FieldElement::from_dec_str(s)
-                            .map_err(|e| ParadexError::SigningError(format!("Invalid value: {}", e)))
+                        Felt::from_dec_str(s).map_err(|e| {
+                            ParadexError::SigningError(format!("Invalid value: {}", e))
+                        })
                     }
                 } else {
-                    Err(ParadexError::SigningError("Expected string value".to_string()))
+                    Err(ParadexError::SigningError(
+                        "Expected string value".to_string(),
+                    ))
                 }
             }
         }

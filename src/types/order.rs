@@ -29,20 +29,51 @@ impl fmt::Display for OrderSide {
     }
 }
 
-/// Order type (Limit/Market)
+/// Order type (Limit/Market/Stop/etc.)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum OrderType {
-    #[serde(rename = "LIMIT")]
-    Limit,
     #[serde(rename = "MARKET")]
     Market,
+    #[serde(rename = "LIMIT")]
+    Limit,
+    #[serde(rename = "STOP_LIMIT")]
+    StopLimit,
+    #[serde(rename = "STOP_MARKET")]
+    StopMarket,
+    #[serde(rename = "TAKE_PROFIT_LIMIT")]
+    TakeProfitLimit,
+    #[serde(rename = "TAKE_PROFIT_MARKET")]
+    TakeProfitMarket,
+    #[serde(rename = "STOP_LOSS_MARKET")]
+    StopLossMarket,
+    #[serde(rename = "STOP_LOSS_LIMIT")]
+    StopLossLimit,
+}
+
+impl OrderType {
+    /// Check if this is a limit order type
+    pub fn is_limit_type(&self) -> bool {
+        matches!(
+            self,
+            OrderType::Limit
+                | OrderType::StopLimit
+                | OrderType::TakeProfitLimit
+                | OrderType::StopLossLimit
+        )
+    }
 }
 
 impl fmt::Display for OrderType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            OrderType::Limit => write!(f, "LIMIT"),
             OrderType::Market => write!(f, "MARKET"),
+            OrderType::Limit => write!(f, "LIMIT"),
+            OrderType::StopLimit => write!(f, "STOP_LIMIT"),
+            OrderType::StopMarket => write!(f, "STOP_MARKET"),
+            OrderType::TakeProfitLimit => write!(f, "TAKE_PROFIT_LIMIT"),
+            OrderType::TakeProfitMarket => write!(f, "TAKE_PROFIT_MARKET"),
+            OrderType::StopLossMarket => write!(f, "STOP_LOSS_MARKET"),
+            OrderType::StopLossLimit => write!(f, "STOP_LOSS_LIMIT"),
         }
     }
 }
@@ -92,14 +123,14 @@ pub struct Order {
     #[serde(rename = "side")]
     pub order_side: OrderSide,
 
-    /// Order type (Limit/Market)
+    /// Order type (Limit/Market/Stop/etc.)
     #[serde(rename = "type")]
     pub order_type: OrderType,
 
     /// Order size (as string with proper decimal places)
     pub size: String,
 
-    /// Order price (optional for market orders)
+    /// Order price (required for limit orders)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price: Option<String>,
 
@@ -115,9 +146,17 @@ pub struct Order {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reduce_only: Option<bool>,
 
-    /// Trigger price for conditional orders
+    /// Trigger price for conditional orders (Stop/TakeProfit orders)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub trigger_price: Option<String>,
+
+    /// Receive window for order validity (milliseconds)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub recv_window: Option<i64>,
+
+    /// Self-trade prevention (EXPIRE_MAKER, EXPIRE_TAKER, EXPIRE_BOTH)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stp: Option<String>,
 
     /// Order signature (set when signing)
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -130,6 +169,10 @@ pub struct Order {
     /// Order ID (for modify operations)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
+
+    /// Order flags (e.g., ["REDUCE_ONLY"])
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub flags: Option<Vec<String>>,
 }
 
 impl Order {
@@ -161,6 +204,8 @@ pub struct OrderBuilder {
     instruction: Option<OrderInstruction>,
     reduce_only: Option<bool>,
     trigger_price: Option<String>,
+    recv_window: Option<i64>,
+    stp: Option<String>,
 }
 
 impl OrderBuilder {
@@ -209,6 +254,16 @@ impl OrderBuilder {
         self
     }
 
+    pub fn recv_window(mut self, recv_window: i64) -> Self {
+        self.recv_window = Some(recv_window);
+        self
+    }
+
+    pub fn stp(mut self, stp: impl Into<String>) -> Self {
+        self.stp = Some(stp.into());
+        self
+    }
+
     pub fn build(self) -> Result<Order, String> {
         Ok(Order {
             market: self.market.ok_or("market is required")?,
@@ -220,9 +275,12 @@ impl OrderBuilder {
             instruction: self.instruction,
             reduce_only: self.reduce_only,
             trigger_price: self.trigger_price,
+            recv_window: self.recv_window,
+            stp: self.stp,
             signature: None,
             signature_timestamp: None,
             id: None,
+            flags: None,
         })
     }
 }

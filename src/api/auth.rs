@@ -1,6 +1,6 @@
 use crate::{
     error::{ParadexError, Result},
-    types::{AuthResponse, SystemConfig},
+    types::AuthResponse,
 };
 use reqwest::Client;
 use serde_json::json;
@@ -31,7 +31,10 @@ pub async fn onboard(
         Ok(())
     } else {
         let status = response.status();
-        let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+        let error_text = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Unknown error".to_string());
 
         // Onboarding might fail if already onboarded - that's ok
         if status.as_u16() == 400 && error_text.contains("already") {
@@ -69,7 +72,10 @@ pub async fn authenticate(
         Ok(auth_response.jwt_token)
     } else {
         let status = response.status();
-        let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+        let error_text = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Unknown error".to_string());
         Err(ParadexError::ApiError {
             status: status.as_u16(),
             message: error_text,

@@ -20,7 +20,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Found {} markets", markets.results.len());
 
     println!("\nFetching market summary...");
-    let summary = paradex.api_client().fetch_markets_summary(Some("BTC-USD-PERP")).await?;
+    let summary = paradex
+        .api_client()
+        .fetch_markets_summary(Some("BTC-USD-PERP"))
+        .await?;
     println!("Market Summary: {:?}", summary);
 
     Ok(())

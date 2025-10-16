@@ -1,7 +1,6 @@
 use crate::{environment::Environment, error::Result};
 use reqwest::{Client, RequestBuilder, Response};
 use serde::de::DeserializeOwned;
-use serde_json::Value;
 use std::time::Duration;
 
 /// HTTP client for making requests to Paradex API
@@ -14,9 +13,7 @@ pub struct HttpClient {
 impl HttpClient {
     /// Create a new HTTP client
     pub fn new(env: Environment) -> Result<Self> {
-        let client = Client::builder()
-            .timeout(Duration::from_secs(30))
-            .build()?;
+        let client = Client::builder().timeout(Duration::from_secs(30)).build()?;
 
         Ok(Self {
             client,
@@ -125,7 +122,10 @@ impl HttpClient {
         if status.is_success() {
             Ok(response.json().await?)
         } else {
-            let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+            let error_text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
             Err(crate::error::ParadexError::ApiError {
                 status: status.as_u16(),
                 message: error_text,

@@ -2,12 +2,12 @@ use crate::{
     message::typed_data::{Domain, TypeMember, TypedData},
     types::Order,
 };
-use serde_json::{json, Value};
+use serde_json::Value;
+use starknet_types_core::felt::Felt;
 use std::collections::HashMap;
-use starknet_crypto::FieldElement;
 
 /// Build order message for signing
-pub fn build_order_message(chain_id: FieldElement, order: &Order) -> TypedData {
+pub fn build_order_message(chain_id: Felt, order: &Order) -> TypedData {
     let mut types = HashMap::new();
 
     // Define StarkNetDomain type
@@ -70,7 +70,10 @@ pub fn build_order_message(chain_id: FieldElement, order: &Order) -> TypedData {
         "side".to_string(),
         Value::String(order.order_side.chain_side().to_string()),
     );
-    message.insert("orderType".to_string(), Value::String(order.order_type.to_string()));
+    message.insert(
+        "orderType".to_string(),
+        Value::String(order.order_type.to_string()),
+    );
     message.insert("size".to_string(), Value::String(order.chain_size()));
     message.insert("price".to_string(), Value::String(order.chain_price()));
 
@@ -87,7 +90,7 @@ pub fn build_order_message(chain_id: FieldElement, order: &Order) -> TypedData {
 }
 
 /// Build modify order message for signing
-pub fn build_modify_order_message(chain_id: FieldElement, order: &Order) -> TypedData {
+pub fn build_modify_order_message(chain_id: Felt, order: &Order) -> TypedData {
     let mut types = HashMap::new();
 
     // Define StarkNetDomain type
@@ -154,7 +157,10 @@ pub fn build_modify_order_message(chain_id: FieldElement, order: &Order) -> Type
         "side".to_string(),
         Value::String(order.order_side.chain_side().to_string()),
     );
-    message.insert("orderType".to_string(), Value::String(order.order_type.to_string()));
+    message.insert(
+        "orderType".to_string(),
+        Value::String(order.order_type.to_string()),
+    );
     message.insert("size".to_string(), Value::String(order.chain_size()));
     message.insert("price".to_string(), Value::String(order.chain_price()));
     message.insert(
@@ -196,7 +202,7 @@ mod tests {
             id: None,
         };
 
-        let chain_id = FieldElement::from_hex_be("0x1").unwrap();
+        let chain_id = Felt::from_hex("0x1").unwrap();
         let typed_data = build_order_message(chain_id, &order);
 
         assert_eq!(typed_data.primary_type, "Order");

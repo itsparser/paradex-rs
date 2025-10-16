@@ -24,10 +24,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Subscribe to BBO (Best Bid/Offer) for BTC
     println!("Subscribing to BBO channel for BTC-USD-PERP...");
-    ws.lock().unwrap().subscribe(
-        WebSocketChannel::BBO,
-        Some("BTC-USD-PERP"),
-        |message| {
+    ws.lock()
+        .unwrap()
+        .subscribe(WebSocketChannel::BBO, Some("BTC-USD-PERP"), |message| {
             Box::pin(async move {
                 if let Some(data) = message.get("data") {
                     if let (Some(bid), Some(ask)) = (data.get("bid"), data.get("ask")) {
@@ -35,30 +34,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             })
-        }
-    ).await?;
+        })
+        .await?;
     println!("✓ Subscribed to BBO\n");
 
     // Subscribe to Trades
     println!("Subscribing to Trades channel for BTC-USD-PERP...");
-    ws.lock().unwrap().subscribe(
-        WebSocketChannel::Trades,
-        Some("BTC-USD-PERP"),
-        |message| {
+    ws.lock()
+        .unwrap()
+        .subscribe(WebSocketChannel::Trades, Some("BTC-USD-PERP"), |message| {
             Box::pin(async move {
                 if let Some(data) = message.get("data") {
                     println!("[Trade] {:?}", data);
                 }
             })
-        }
-    ).await?;
+        })
+        .await?;
     println!("✓ Subscribed to Trades\n");
 
     // Subscribe to Market Summary
     println!("Subscribing to Market Summary for ALL markets...");
-    ws.lock().unwrap().subscribe_by_name(
-        "markets_summary.ALL",
-        |message| {
+    ws.lock()
+        .unwrap()
+        .subscribe_by_name("markets_summary.ALL", |message| {
             Box::pin(async move {
                 if let Some(data) = message.get("data") {
                     if let Some(symbol) = data.get("symbol") {
@@ -66,30 +64,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             })
-        }
-    ).await?;
+        })
+        .await?;
     println!("✓ Subscribed to Market Summary\n");
 
     // Subscribe to OrderBook snapshots
     println!("Subscribing to OrderBook for BTC-USD-PERP...");
-    let orderbook_channel = WebSocketChannel::OrderBook
-        .with_params(&["BTC-USD-PERP", "15", "100", "1"]);
+    let orderbook_channel =
+        WebSocketChannel::OrderBook.with_params(&["BTC-USD-PERP", "15", "100", "1"]);
 
-    ws.lock().unwrap().subscribe_by_name(
-        &orderbook_channel,
-        |message| {
+    ws.lock()
+        .unwrap()
+        .subscribe_by_name(&orderbook_channel, |message| {
             Box::pin(async move {
                 if let Some(data) = message.get("data") {
                     if let (Some(bids), Some(asks)) = (data.get("bids"), data.get("asks")) {
-                        println!("[OrderBook] Bids: {} | Asks: {}",
+                        println!(
+                            "[OrderBook] Bids: {} | Asks: {}",
                             bids.as_array().map(|a| a.len()).unwrap_or(0),
                             asks.as_array().map(|a| a.len()).unwrap_or(0)
                         );
                     }
                 }
             })
-        }
-    ).await?;
+        })
+        .await?;
     println!("✓ Subscribed to OrderBook\n");
 
     println!("Listening for WebSocket messages...");

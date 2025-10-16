@@ -1,16 +1,20 @@
-use crate::{environment::Environment, error::{ParadexError, Result}};
+use crate::{
+    environment::Environment,
+    error::{ParadexError, Result},
+};
 use futures::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
-use tokio::time::{Duration, sleep};
-use tokio_tungstenite::{connect_async, tungstenite::Message, WebSocketStream, MaybeTlsStream};
 use tokio::net::TcpStream;
+use tokio::sync::{Mutex, RwLock};
+use tokio::time::{sleep, Duration};
+use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
 
 type WsStream = WebSocketStream<MaybeTlsStream<TcpStream>>;
-type MessageCallback = Arc<dyn Fn(serde_json::Value) -> futures::future::BoxFuture<'static, ()> + Send + Sync>;
+type MessageCallback =
+    Arc<dyn Fn(serde_json::Value) -> futures::future::BoxFuture<'static, ()> + Send + Sync>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct WsRequest {
@@ -89,7 +93,13 @@ impl WebSocketClientImpl {
         let auto_reconnect = self.auto_reconnect;
 
         tokio::spawn(async move {
-            Self::read_messages(stream_clone, callbacks_clone, is_connected_clone, auto_reconnect).await;
+            Self::read_messages(
+                stream_clone,
+                callbacks_clone,
+                is_connected_clone,
+                auto_reconnect,
+            )
+            .await;
         });
 
         // Start ping task if configured
@@ -125,7 +135,10 @@ impl WebSocketClientImpl {
     /// Subscribe to a channel
     pub async fn subscribe(&self, channel: &str, callback: MessageCallback) -> Result<()> {
         // Store callback
-        self.callbacks.write().await.insert(channel.to_string(), callback);
+        self.callbacks
+            .write()
+            .await
+            .insert(channel.to_string(), callback);
 
         // Send subscription message
         let sub_msg = json!({
@@ -138,7 +151,10 @@ impl WebSocketClientImpl {
         });
 
         self.send_message(&sub_msg).await?;
-        self.subscribed_channels.write().await.insert(channel.to_string(), true);
+        self.subscribed_channels
+            .write()
+            .await
+            .insert(channel.to_string(), true);
 
         log::info!("Subscribed to channel: {}", channel);
         Ok(())
@@ -195,7 +211,9 @@ impl WebSocketClientImpl {
 
                         if let Ok(response) = serde_json::from_str::<WsResponse>(&text) {
                             if let Some(params) = response.params {
-                                if let Some(channel) = params.get("channel").and_then(|v| v.as_str()) {
+                                if let Some(channel) =
+                                    params.get("channel").and_then(|v| v.as_str())
+                                {
                                     let callbacks_read = callbacks.read().await;
                                     if let Some(callback) = callbacks_read.get(channel) {
                                         let callback_clone = Arc::clone(callback);
@@ -232,7 +250,11 @@ impl WebSocketClientImpl {
     }
 
     /// Ping loop to keep connection alive
-    async fn ping_loop(stream: Arc<Mutex<Option<WsStream>>>, is_connected: Arc<Mutex<bool>>, interval: Duration) {
+    async fn ping_loop(
+        stream: Arc<Mutex<Option<WsStream>>>,
+        is_connected: Arc<Mutex<bool>>,
+        interval: Duration,
+    ) {
         loop {
             sleep(interval).await;
 
@@ -272,6 +294,90 @@ impl WebSocketClientImpl {
                 .map_err(|e| ParadexError::WebSocketError(format!("Close failed: {}", e)))?;
         }
         *self.is_connected.lock().await = false;
+        Ok(())
+    }
+
+    /// Get current subscriptions
+    pub async fn get_subscriptions(&self) -> HashMap<String, bool> {
+        self.subscribed_channels.read().await.clone()
+    }
+
+    /// Manually pump one message from the WebSocket (for deterministic consumption)
+    pub async fn pump_once(&self) -> Result<bool> {
+        let mut stream_guard = self.ws_stream.lock().await;
+
+        if let Some(ws) = stream_guard.as_mut() {
+            match tokio::time::timeout(Duration::from_millis(1), ws.next()).await {
+                Ok(Some(Ok(Message::Text(text)))) => {
+                    drop(stream_guard);
+
+                    if let Ok(response) = serde_json::from_str::<WsResponse>(&text) {
+                        if let Some(params) = response.params {
+                            if let Some(channel) = params.get("channel").and_then(|v| v.as_str()) {
+                                let callbacks_read = self.callbacks.read().await;
+                                if let Some(callback) = callbacks_read.get(channel) {
+                                    let callback_clone = Arc::clone(callback);
+                                    let params_clone = params.clone();
+                                    tokio::spawn(async move {
+                                        callback_clone(params_clone).await;
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    Ok(true)
+                }
+                Ok(None) | Err(_) => Ok(false),
+                _ => Ok(false),
+            }
+        } else {
+            Ok(false)
+        }
+    }
+
+    /// Pump messages until predicate is satisfied or timeout
+    pub async fn pump_until<F>(&self, predicate: F, timeout_secs: f64) -> Result<u32>
+    where
+        F: Fn(&serde_json::Value) -> bool,
+    {
+        let start = std::time::Instant::now();
+        let timeout = Duration::from_secs_f64(timeout_secs);
+        let mut count = 0u32;
+        let last_message: Option<serde_json::Value> = None;
+
+        while start.elapsed() < timeout {
+            if self.pump_once().await? {
+                count += 1;
+                // Check predicate on last received message
+                if let Some(msg) = &last_message {
+                    if predicate(msg) {
+                        break;
+                    }
+                }
+            } else {
+                tokio::time::sleep(Duration::from_millis(1)).await;
+            }
+        }
+
+        Ok(count)
+    }
+
+    /// Inject a message into the processing pipeline (for testing/simulation)
+    pub async fn inject(&self, message: &str) -> Result<()> {
+        if let Ok(response) = serde_json::from_str::<WsResponse>(message) {
+            if let Some(params) = response.params {
+                if let Some(channel) = params.get("channel").and_then(|v| v.as_str()) {
+                    let callbacks_read = self.callbacks.read().await;
+                    if let Some(callback) = callbacks_read.get(channel) {
+                        let callback_clone = Arc::clone(callback);
+                        let params_clone = params.clone();
+                        tokio::spawn(async move {
+                            callback_clone(params_clone).await;
+                        });
+                    }
+                }
+            }
+        }
         Ok(())
     }
 }

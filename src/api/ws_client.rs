@@ -1,6 +1,8 @@
 use crate::{environment::Environment, error::Result};
-mod ws_client_impl;
-pub use ws_client_impl::WebSocketClientImpl;
+
+#[path = "ws_client_impl.rs"]
+mod ws_impl;
+pub use ws_impl::WebSocketClientImpl;
 
 /// WebSocket channels available in Paradex
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -116,7 +118,12 @@ impl WebSocketClient {
     }
 
     /// Subscribe to a channel with a callback
-    pub async fn subscribe<F>(&self, channel: WebSocketChannel, market: Option<&str>, callback: F) -> Result<()>
+    pub async fn subscribe<F>(
+        &self,
+        channel: WebSocketChannel,
+        market: Option<&str>,
+        callback: F,
+    ) -> Result<()>
     where
         F: Fn(serde_json::Value) -> futures::future::BoxFuture<'static, ()> + Send + Sync + 'static,
     {
@@ -126,7 +133,9 @@ impl WebSocketClient {
             channel.as_str().to_string()
         };
 
-        self.inner.subscribe(&channel_name, std::sync::Arc::new(callback)).await
+        self.inner
+            .subscribe(&channel_name, std::sync::Arc::new(callback))
+            .await
     }
 
     /// Subscribe to a channel by exact name
@@ -134,7 +143,9 @@ impl WebSocketClient {
     where
         F: Fn(serde_json::Value) -> futures::future::BoxFuture<'static, ()> + Send + Sync + 'static,
     {
-        self.inner.subscribe(channel_name, std::sync::Arc::new(callback)).await
+        self.inner
+            .subscribe(channel_name, std::sync::Arc::new(callback))
+            .await
     }
 
     /// Unsubscribe from a channel
@@ -156,6 +167,29 @@ impl WebSocketClient {
     /// Close the connection
     pub async fn close(&self) -> Result<()> {
         self.inner.close().await
+    }
+
+    /// Get current subscriptions
+    pub async fn get_subscriptions(&self) -> std::collections::HashMap<String, bool> {
+        self.inner.get_subscriptions().await
+    }
+
+    /// Manually pump one message (for deterministic consumption)
+    pub async fn pump_once(&self) -> Result<bool> {
+        self.inner.pump_once().await
+    }
+
+    /// Pump messages until predicate is satisfied
+    pub async fn pump_until<F>(&self, predicate: F, timeout_secs: f64) -> Result<u32>
+    where
+        F: Fn(&serde_json::Value) -> bool,
+    {
+        self.inner.pump_until(predicate, timeout_secs).await
+    }
+
+    /// Inject a raw message for testing/simulation
+    pub async fn inject(&self, message: &str) -> Result<()> {
+        self.inner.inject(message).await
     }
 }
 
